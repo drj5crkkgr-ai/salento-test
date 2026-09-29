@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#10131a" />
+  <title>Salento · Reiseplan</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+  <style>
+    :root{
+      --bg:#f4f6f7;--paper:#fff;--ink:#11131a;--muted:#6f7582;--line:#e6e8ec;
+      --turq:#19d7cf;--turq2:#62ece4;--violet:#8c5cff;--violet2:#b89cff;--dark:#10131a;
+      --shadow:0 18px 60px rgba(17,19,26,.12);--r-xl:28px;--r-lg:22px;--r-md:16px;
+    }
+    *{box-sizing:border-box} html,body{margin:0;min-height:100%;font-family:Manrope,system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--ink)}
+    body{overflow-x:hidden}.app{min-height:100vh}.view{display:none}.view.active{display:block}
+    button,a{font:inherit}.topbar{position:fixed;z-index:900;left:18px;right:18px;top:calc(14px + env(safe-area-inset-top));display:flex;align-items:center;justify-content:space-between;gap:12px;pointer-events:none}
+    .brand,.top-actions{pointer-events:auto}.brand{display:flex;align-items:center;gap:10px;background:rgba(16,19,26,.90);backdrop-filter:blur(14px);color:#fff;border-radius:18px;padding:10px 14px;box-shadow:var(--shadow)}
+    .brand-mark{width:30px;height:30px;border-radius:12px;background:linear-gradient(135deg,var(--turq),var(--violet));display:grid;place-items:center;font-weight:900;color:var(--dark)}
+    .brand strong{font-size:14px;letter-spacing:.01em}.brand small{display:block;color:#bbc0ca;font-size:10px;margin-top:1px}
+    .top-actions{display:flex;gap:8px}.glass-btn{border:0;background:rgba(255,255,255,.94);backdrop-filter:blur(14px);color:var(--ink);border-radius:15px;padding:11px 13px;box-shadow:0 10px 30px rgba(17,19,26,.10);cursor:pointer;font-weight:700}
+    #map{height:100vh;width:100%;background:#dfe7e7}.map-overlay{position:fixed;z-index:850;left:18px;right:18px;bottom:calc(88px + env(safe-area-inset-bottom));pointer-events:none}
+    .hero-card{pointer-events:auto;max-width:560px;background:rgba(255,255,255,.94);backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,.75);border-radius:26px;padding:18px 18px 16px;box-shadow:var(--shadow)}
+    .eyebrow{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--violet);font-weight:800}.hero-card h1{font-size:30px;line-height:1.03;margin:7px 0 9px;letter-spacing:-.04em}.hero-card p{font-size:13px;line-height:1.55;color:var(--muted);margin:0}.hero-meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:13px}.chip{display:inline-flex;align-items:center;gap:6px;padding:8px 10px;border-radius:999px;background:#f1f3f5;font-size:11px;font-weight:700;color:#3d424c}.chip.accent{background:linear-gradient(90deg,rgba(25,215,207,.15),rgba(140,92,255,.14));color:#292d36}.dot{width:7px;height:7px;border-radius:50%;background:var(--turq)}
+    .bottom-nav{position:fixed;z-index:1000;left:50%;transform:translateX(-50%);bottom:calc(14px + env(safe-area-inset-bottom));display:flex;gap:5px;padding:6px;background:rgba(16,19,26,.94);backdrop-filter:blur(16px);border-radius:19px;box-shadow:var(--shadow)}
+    .nav-btn{border:0;color:#aeb4bf;background:transparent;padding:10px 14px;border-radius:14px;font-weight:800;font-size:12px;cursor:pointer;display:flex;gap:7px;align-items:center}.nav-btn.active{color:var(--dark);background:linear-gradient(135deg,var(--turq2),var(--violet2))}
+    .marker-pin{width:28px;height:28px;border-radius:50% 50% 50% 12px;transform:rotate(-45deg);background:var(--dark);border:3px solid white;box-shadow:0 5px 16px rgba(17,19,26,.25)}.marker-pin.main{background:var(--turq)}.marker-pin.alt{background:var(--violet)}.marker-pin.base{background:var(--dark)}.marker-pin.air{background:#ff9d42}.marker-pin span{display:block;width:7px;height:7px;border-radius:50%;background:white;margin:7px auto;transform:rotate(45deg)}
+    .leaflet-control-attribution{font-size:9px!important}.leaflet-popup-content-wrapper{border-radius:16px;box-shadow:0 14px 38px rgba(17,19,26,.17)}.leaflet-popup-content{margin:12px 14px;font-family:Manrope,sans-serif}.popup-title{font-weight:800;margin-bottom:3px}.popup-link{border:0;background:none;padding:0;color:#6a43e8;font-weight:800;cursor:pointer;font-size:12px}
+    .sheet{position:fixed;z-index:1200;inset:0;background:rgba(12,14,20,.36);backdrop-filter:blur(3px);display:none;align-items:flex-end}.sheet.open{display:flex}.sheet-card{background:var(--paper);width:100%;max-height:92vh;border-radius:30px 30px 0 0;overflow:auto;box-shadow:0 -24px 70px rgba(17,19,26,.22);animation:up .24s ease-out}@keyframes up{from{transform:translateY(28px);opacity:.6}to{transform:none;opacity:1}}
+    .sheet-handle{width:46px;height:5px;background:#d8dbe1;border-radius:9px;margin:10px auto 8px}.detail-photo{height:260px;background:linear-gradient(135deg,#d5fffb,#e7dcff);position:relative;overflow:hidden}.detail-photo img{width:100%;height:100%;object-fit:cover;display:block}.photo-shade{position:absolute;inset:0;background:linear-gradient(180deg,transparent 50%,rgba(12,14,20,.55))}.photo-credit{position:absolute;right:12px;bottom:10px;color:white;font-size:9px;font-weight:700;background:rgba(12,14,20,.4);padding:5px 7px;border-radius:999px;text-decoration:none}.sheet-close{position:absolute;right:16px;top:16px;z-index:5;border:0;width:42px;height:42px;border-radius:50%;background:rgba(255,255,255,.92);font-size:20px;cursor:pointer}.detail-body{padding:20px 20px 32px}.detail-title{display:flex;justify-content:space-between;gap:16px;align-items:flex-start}.detail-title h2{font-size:27px;letter-spacing:-.035em;line-height:1.05;margin:4px 0}.rank{min-width:55px;text-align:center;background:var(--dark);color:white;padding:9px 10px;border-radius:15px;font-size:10px;font-weight:800}.rank b{display:block;font-size:18px}.detail-body p{color:var(--muted);font-size:13px;line-height:1.6}.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0}.info{border:1px solid var(--line);border-radius:16px;padding:12px}.info label{display:block;font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);font-weight:800}.info div{font-size:12px;font-weight:800;margin-top:4px}.october{padding:14px;border-radius:18px;background:linear-gradient(135deg,rgba(25,215,207,.12),rgba(140,92,255,.11));font-size:12px;line-height:1.5;color:#363b45;margin:16px 0}.actions{display:flex;gap:9px;flex-wrap:wrap}.action{border:0;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;padding:11px 13px;border-radius:14px;background:var(--dark);color:#fff;font-weight:800;font-size:11px;cursor:pointer}.action.secondary{background:#eef0f3;color:var(--ink)}
+    .page{padding:96px 18px 110px;max-width:1050px;margin:0 auto}.page-head{margin-bottom:20px}.page-head .eyebrow{margin-bottom:8px}.page-head h1{font-size:40px;letter-spacing:-.045em;line-height:1;margin:0 0 10px}.page-head p{color:var(--muted);max-width:650px;font-size:13px;line-height:1.6}.day-list{display:grid;gap:12px}.day-card{background:white;border:1px solid var(--line);border-radius:22px;padding:17px;cursor:pointer;transition:.18s ease;box-shadow:0 7px 20px rgba(17,19,26,.035)}.day-card:hover{transform:translateY(-2px);box-shadow:0 12px 32px rgba(17,19,26,.08)}.day-top{display:flex;align-items:center;justify-content:space-between;gap:12px}.date-badge{width:54px;height:54px;border-radius:17px;background:var(--dark);color:white;display:grid;place-items:center;line-height:1;text-align:center}.date-badge b{font-size:19px}.date-badge small{font-size:9px;color:#c8ccd3;margin-top:2px}.day-card h3{flex:1;margin:0;font-size:17px;letter-spacing:-.02em}.day-card p{color:var(--muted);font-size:12px;line-height:1.5;margin:9px 0 0}.day-flags{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}.flag{font-size:9px;font-weight:800;border-radius:999px;padding:6px 8px;background:#f0f2f4}.flag.transfer{color:#6b43ea;background:#f1ecff}.flag.rest{color:#087c79;background:#e5fbf9}.flag.city{color:#5d5050;background:#f6eeee}.flag.beach{color:#006d70;background:#e4fbfc}
+    .stops-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(245px,1fr));gap:14px}.stop-card{background:white;border:1px solid var(--line);border-radius:22px;overflow:hidden;cursor:pointer;box-shadow:0 8px 22px rgba(17,19,26,.04);transition:.18s ease}.stop-card:hover{transform:translateY(-3px);box-shadow:0 16px 34px rgba(17,19,26,.09)}.stop-img{height:150px;background:linear-gradient(135deg,#dffefa,#e8e0ff);position:relative;overflow:hidden}.stop-img img{width:100%;height:100%;object-fit:cover}.stop-tag{position:absolute;left:10px;top:10px;padding:6px 8px;border-radius:999px;background:rgba(16,19,26,.85);color:white;font-size:9px;font-weight:800}.stop-body{padding:14px}.stop-body h3{margin:0 0 5px;font-size:16px}.stop-body p{margin:0;color:var(--muted);font-size:11px;line-height:1.45}.stop-rank{float:right;color:var(--violet);font-weight:900;font-size:11px}.searchbar{display:flex;gap:8px;margin:18px 0}.searchbar input{flex:1;border:1px solid var(--line);background:white;border-radius:15px;padding:12px 14px;outline:none}.filter{border:1px solid var(--line);background:white;border-radius:15px;padding:0 12px;font-weight:700}
+    .day-sheet-body{padding:20px 20px 34px}.day-sheet-body h2{font-size:28px;letter-spacing:-.04em;margin:0 0 6px}.day-sheet-body .summary{color:var(--muted);font-size:13px;line-height:1.55}.timeline{margin-top:18px;display:grid;gap:10px}.timeline-item{display:flex;gap:12px;align-items:flex-start}.timeline-icon{width:34px;height:34px;border-radius:12px;background:linear-gradient(135deg,rgba(25,215,207,.2),rgba(140,92,255,.2));display:grid;place-items:center;font-size:14px}.timeline-text b{display:block;font-size:12px}.timeline-text span{font-size:11px;color:var(--muted);line-height:1.45}.choice{margin-top:15px;border:1px solid var(--line);border-radius:17px;padding:13px}.choice strong{font-size:12px}.choice p{margin:5px 0 0;color:var(--muted);font-size:11px;line-height:1.45}.choice-buttons{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}.choice-buttons button{border:0;border-radius:12px;padding:9px 10px;font-size:10px;font-weight:800;cursor:pointer}.choice-buttons .primary{background:var(--turq);color:#062a29}.choice-buttons .alt{background:#eee8ff;color:#4f2da6}
+    .countdown{position:fixed;z-index:850;right:18px;top:calc(84px + env(safe-area-inset-top));background:rgba(16,19,26,.9);color:white;border-radius:16px;padding:10px 12px;backdrop-filter:blur(14px);box-shadow:var(--shadow);font-size:10px;font-weight:800}.countdown b{font-size:15px;color:var(--turq2);display:block}
+    @media (min-width:760px){.map-overlay{left:28px;bottom:28px;right:auto}.bottom-nav{bottom:28px}.hero-card{padding:22px}.hero-card h1{font-size:38px}.sheet{align-items:center;justify-content:center;padding:30px}.sheet-card{max-width:680px;border-radius:30px;max-height:88vh}.sheet-handle{display:none}.detail-photo{height:330px}.sheet-close{position:fixed}.page{padding-top:110px}.day-list{grid-template-columns:1fr 1fr}.countdown{right:28px}.topbar{left:28px;right:28px}}
+  
+    .map-fallback{height:100%;min-height:100vh;display:grid;place-items:center;padding:105px 18px 120px;background:radial-gradient(circle at 20% 10%,rgba(25,215,207,.18),transparent 32%),radial-gradient(circle at 80% 30%,rgba(140,92,255,.16),transparent 32%),#eaf0f1}.map-fallback-inner{width:min(620px,100%);background:rgba(255,255,255,.94);border:1px solid rgba(255,255,255,.8);border-radius:28px;padding:22px;box-shadow:var(--shadow)}.map-fallback-inner h2{font-size:32px;letter-spacing:-.04em;margin:6px 0 8px}.map-fallback-inner>p{font-size:12px;line-height:1.6;color:var(--muted)}.fallback-route{display:grid;gap:7px;margin-top:16px;max-height:52vh;overflow:auto}.fallback-route button{border:1px solid var(--line);background:white;border-radius:14px;padding:10px 12px;text-align:left;display:flex;align-items:center;gap:10px;cursor:pointer;font-weight:800;color:var(--ink)}.fallback-route button span{width:25px;height:25px;border-radius:9px;background:linear-gradient(135deg,var(--turq2),var(--violet2));display:grid;place-items:center;font-size:10px}.day-card:focus-visible,.stop-card:focus-visible,.nav-btn:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid rgba(140,92,255,.45);outline-offset:2px}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <div class="brand"><div class="brand-mark">S</div><div><strong>SALENTO</strong><small>Roadtrip · 4 Basen</small></div></div>
+    <div class="top-actions"><button class="glass-btn" id="fitRoute">Route</button></div>
+  </div>
+
+  <div id="view-map" class="view active">
+    <div id="map"></div>
+    <div class="countdown" id="countdown"><b>4 Basen</b>ruhige Route</div>
+    <div class="map-overlay">
+      <div class="hero-card">
+        <div class="eyebrow">APULIEN · SALENTO</div>
+        <h1>Langsam reisen.<br>Stark auswählen.</h1>
+        <p>Jeder Ausflug hat genau einen Hauptstopp. Alternativen ersetzen den Hauptstopp – sie kommen nie zusätzlich dazu.</p>
+        <div class="hero-meta"><span class="chip accent"><span class="dot"></span> Nebensaison-Modus</span><span class="chip">4 Basen</span><span class="chip">kurze Etappen</span><span class="chip">1 Stopp pro Ausflug</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="view-days" class="view"><main class="page"><div class="page-head"><div class="eyebrow">TAGESPLAN</div><h1>Jeder Tag.<br>Ein klarer Plan.</h1><p>Die Route ist bewusst ruhig. Stadt- und Ruhetage bleiben frei von zusätzlichen Zielen; an Transfer- und Ausflugstagen gibt es genau eine Hauptwahl plus eine wetterabhängige Alternative.</p></div><div id="dayList" class="day-list"></div></main></div>
+
+  <div id="view-stops" class="view"><main class="page"><div class="page-head"><div class="eyebrow">ALLE SPOTS</div><h1>Stops & Alternativen</h1><p>Jeder Ort mit Foto, Nebensaison-Einschätzung und Highlight-Rang. Fotos werden aus Wikimedia Commons geladen; dadurch bleibt die App klein und aktuell.</p></div><div class="searchbar"><input id="stopSearch" placeholder="Spot suchen…"><select class="filter" id="stopFilter"><option value="all">Alle</option><option value="base">Basen</option><option value="main">Hauptstopps</option><option value="alt">Alternativen</option><option value="optional">Optional</option></select></div><div id="stopsGrid" class="stops-grid"></div></main></div>
+
+  <nav class="bottom-nav" aria-label="Navigation"><button class="nav-btn active" data-view="map">◉ Karte</button><button class="nav-btn" data-view="days">▤ Tage</button><button class="nav-btn" data-view="stops">◆ Stops</button></nav>
+</div>
+
+<div class="sheet" id="spotSheet"><div class="sheet-card"><div class="sheet-handle"></div><button class="sheet-close" data-close="spotSheet">×</button><div id="spotDetail"></div></div></div>
+<div class="sheet" id="daySheet"><div class="sheet-card"><div class="sheet-handle"></div><button class="sheet-close" data-close="daySheet">×</button><div id="dayDetail"></div></div></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script>
+const spots = [
+ {id:'lecce',name:'Lecce',role:'base',lat:40.352011,lng:18.169139,rank:5,type:'Stadt · Basis',mapsQuery:'Centro storico, Lecce, Italy',centerLabel:'Centro storico, Lecce',commonsFile:'Collage Lecce.jpg',blurb:'Barock, Plätze und Cafés – bewusst ohne zusätzlichen Tagesausflug.',season:'Wetterunabhängig und ideal für einen ruhigen Start. Die Tage in Lecce bleiben absichtlich autofrei.'},
+ {id:'baia',name:'Baia dei Turchi',role:'main',lat:40.19516,lng:18.46256,rank:1,type:'Naturstrand',photoQuery:'Baia dei Turchi Otranto',blurb:'Sand, klares Wasser und mediterrane Vegetation nördlich von Otranto.',season:'Hauptwahl bei Sonne und ruhiger See. Funktioniert auch ohne Baden als langer Strandspaziergang.'},
+ {id:'santandrea',name:'Torre Sant’Andrea',role:'alt',lat:40.25529,lng:18.44501,rank:7,type:'Felsküste · Alternative',photoQuery:'Torre Sant Andrea Melendugno sea stacks',blurb:'Weiße Kalkfelsen, Bögen und Felstürme.',season:'Sehr starke Alternative bei Wind, Wolken oder wenn Baden keine Priorität hat.'},
+ {id:'otranto',name:'Otranto',role:'base',lat:40.147825,lng:18.485933,rank:2,type:'Stadt · Basis',mapsQuery:'Centro storico, Otranto, Italy',centerLabel:'Centro storico, Otranto',commonsFile:'Otranto habour and old town.JPG',blurb:'Altstadt, Hafen, Mauern, Castello und Kathedrale direkt am Meer.',season:'Ein wetterrobuster Stopp. Ein voller Tag bleibt ausschließlich Otranto.'},
+ {id:'badisco',name:'Porto Badisco',role:'main',lat:40.07893,lng:18.48518,rank:11,type:'Naturbucht',commonsFile:'Porto Badisco.jpg',blurb:'Kleine, geschützte Bucht südlich von Otranto.',season:'Gut bei ruhiger See. Ein kurzer, kompakter Küstentag statt einer langen Rundfahrt.'},
+ {id:'cesarea',name:'Santa Cesarea Terme',role:'alt',lat:40.0363,lng:18.4568,rank:15,type:'Küstenort · Alternative',commonsFile:'Santa Cesarea Terme.jpg',blurb:'Dramatische Küstenlage, historische Villen und Meerblick.',season:'Bessere Wahl bei kühlem oder grauem Wetter, weil der Ort nicht vom Baden lebt.'},
+ {id:'pescoluse',name:'Pescoluse',role:'main',lat:39.83798,lng:18.25397,rank:8,type:'Sandstrand',commonsFile:'MarinaDiPescoluse.jpg',blurb:'Langer heller Sandstrand mit flachem Ionischen Meer.',season:'Als Hauptwahl bei echtem Badewetter. Auf freie Strandabschnitte setzen statt auf Lidos.'},
+ {id:'leuca',name:'Santa Maria di Leuca',role:'alt',lat:39.79806,lng:18.35583,rank:10,type:'Kap · Alternative',commonsFile:'Lighthouse Santa Maria di Leuca.JPG',blurb:'Kap, Leuchtturm und weite Meerblicke an der Südspitze.',season:'Die bessere Transfer-Alternative, wenn es kein Strandtag wird.'},
+ {id:'gallipoli',name:'Gallipoli',role:'base',lat:40.05583,lng:17.9925,rank:9,type:'Stadt · Basis',mapsQuery:'Centro storico, Gallipoli, Italy',centerLabel:'Centro storico, Gallipoli',photoQuery:'Gallipoli Citta Vecchia Puglia',blurb:'Altstadt, Hafen und Mauern auf der ionischen Seite.',season:'Vor allem als Abendbasis stark. Von hier aus keine Ausflüge zurück an die Adriaküste.'},
+ {id:'suina',name:'Punta della Suina',role:'main',lat:40.00277,lng:18.01333,rank:6,type:'Naturküste',photoQuery:'Punta della Suina Gallipoli',blurb:'Kleine Sandbuchten, niedrige Felsen und Pinien.',season:'Als kompakter Küstentag planen. Baden ist Bonus, nicht Voraussetzung.'},
+ {id:'baiaverde',name:'Baia Verde',role:'alt',lat:40.03761,lng:18.01651,rank:17,type:'Sandstrand · Alternative',photoQuery:'Baia Verde Gallipoli beach',blurb:'Langer Sandstrand sehr nah bei Gallipoli.',season:'Praktisch und einfach, aber außerhalb der Hochsaison ist die Lido-Infrastruktur weniger wichtig.'},
+ {id:'selvaggio',name:'Porto Selvaggio',role:'main',lat:40.151478,lng:17.967901,rank:3,type:'Naturpark',photoQuery:'Porto Selvaggio Nardo bay',blurb:'Pinienwald, Fußweg und wilde Bucht.',season:'Natur und Bewegung funktionieren auch ohne klassischen Badetag.'},
+ {id:'caterina',name:'Santa Caterina',role:'alt',lat:40.14101,lng:17.98411,rank:16,type:'Küstenort · Alternative',commonsFile:'Santa Caterina di Nardò.jpg',blurb:'Kleine Bucht und einfacher Zugang südlich von Porto Selvaggio.',season:'Gute Bequemlichkeitsalternative, wenn der Fußweg in den Naturpark nicht passt.'},
+ {id:'prosciutto',name:'Punta Prosciutto',role:'main',lat:40.29655,lng:17.77854,rank:4,type:'Naturstrand',photoQuery:'Punta Prosciutto Puglia beach dunes',blurb:'Heller Sand, Dünen und flaches Ionisches Meer.',season:'Ideal als Zwischenstopp auf dem Weg zur letzten Basis.'},
+ {id:'lapillo',name:'Torre Lapillo',role:'alt',lat:40.28098,lng:17.84045,rank:14,type:'Sandstrand · Alternative',photoQuery:'Torre Lapillo Puglia beach',blurb:'Ähnlicher Strandcharakter, aber stärker erschlossen.',season:'Alternative, wenn einfacher Zugang und etwas mehr Infrastruktur gewünscht sind.'},
+ {id:'chianca',name:'Torre Chianca',role:'base',lat:40.45961,lng:18.2142,rank:13,type:'Meer · Basis',mapsQuery:'Torre Chianca, Lecce, Italy',centerLabel:'Ortszentrum Torre Chianca',photoQuery:'Torre Chianca Lecce beach',blurb:'Ruhiger Abschluss direkt an der Küste.',season:'Mindestens einen Tag bewusst ohne Ausflug lassen. Wetterreserve statt Pflichtprogramm.'},
+ {id:'orso',name:'Torre dell’Orso',role:'optional',lat:40.274517,lng:18.430168,rank:12,type:'Optionaler Ausflug',commonsFile:"Torre dell'orso 2.JPG",blurb:'Große Sandbucht und die Felsen der Due Sorelle.',season:'Optional – nur wenn von der letzten Basis aus noch einmal ein stärkerer Adriastopp gewünscht ist.'}
+];
+const byId = Object.fromEntries(spots.map(s=>[s.id,s]));
+const days = [
+ {day:1,title:'Lecce · ankommen',kind:'city',summary:'In Lecce ankommen, Orientierung im Zentrum und ein ruhiger erster Abend.',stops:['lecce'],timeline:[['Start','Ankommen und ins Zentrum'],['Danach','Lecce zu Fuß'],['Abend','Altstadt und Essen']]},
+ {day:2,title:'Lecce · voller Stadttag',kind:'city',summary:'Kein Ausflug. Barock, Plätze, Cafés und Restaurants – alles zu Fuß.',stops:['lecce'],timeline:[['Vormittag','Altstadt und Santa Croce'],['Mittag','Lange Pause in Lecce'],['Nachmittag','Piazza Duomo & Gassen'],['Abend','Essen im Zentrum']]},
+ {day:3,title:'Lecce · zweiter ruhiger Tag',kind:'rest',summary:'Noch einmal Lecce. Kein Strand-Ausflug vor dem Wechsel nach Otranto.',stops:['lecce'],timeline:[['Ganzer Tag','Lecce ohne Fahrprogramm']]},
+ {day:4,title:'Lecce → Otranto',kind:'transfer',summary:'Genau ein Zwischenstopp: Baia dei Turchi ODER Torre Sant’Andrea. Danach direkt ins Zentrum von Otranto.',stops:['lecce','baia','otranto'],choice:{main:'baia',alt:'santandrea'},timeline:[['Start','Lecce verlassen'],['Unterwegs','Ein Küstenstopp'],['Danach','Otranto Zentrum'],['Abend','Otranto']]},
+ {day:5,title:'Otranto · voller Ortstag',kind:'city',summary:'Kein Auto. Altstadt, Hafen, Kathedrale und Castello.',stops:['otranto'],timeline:[['Ganzer Tag','Otranto zu Fuß']]},
+ {day:6,title:'Otranto · ein Küstenausflug',kind:'beach',summary:'Porto Badisco ODER Santa Cesarea Terme. Kein Küsten-Hopping.',stops:['otranto','badisco'],choice:{main:'badisco',alt:'cesarea'},timeline:[['Start','Abfahrt von Otranto'],['Unterwegs','Ein Ziel an der Küste'],['Danach','Zurück nach Otranto']]},
+ {day:7,title:'Otranto → Gallipoli',kind:'transfer',summary:'Pescoluse bei Badewetter ODER Santa Maria di Leuca bei kühlerem Wetter. Danach direkt ins Zentrum von Gallipoli.',stops:['otranto','pescoluse','gallipoli'],choice:{main:'pescoluse',alt:'leuca'},timeline:[['Start','Otranto verlassen'],['Unterwegs','Ein Süd-Salento-Stopp'],['Danach','Gallipoli Zentrum'],['Abend','Altstadt Gallipoli']]},
+ {day:8,title:'Gallipoli · Naturküste',kind:'beach',summary:'Punta della Suina als Hauptwahl. Baia Verde nur als einfache Alternative.',stops:['gallipoli','suina'],choice:{main:'suina',alt:'baiaverde'},timeline:[['Start','Zum ausgewählten Strand'],['Danach','Zurück nach Gallipoli'],['Abend','Gallipoli']]},
+ {day:9,title:'Gallipoli · Naturpark',kind:'beach',summary:'Porto Selvaggio als Hauptwahl. Santa Caterina, wenn weniger Fußweg gewünscht ist.',stops:['gallipoli','selvaggio'],choice:{main:'selvaggio',alt:'caterina'},timeline:[['Start','Zum ausgewählten Ziel'],['Unterwegs','Natur / Küste'],['Danach','Zurück nach Gallipoli']]},
+ {day:10,title:'Gallipoli → Torre Chianca',kind:'transfer',summary:'Punta Prosciutto ODER Torre Lapillo. Genau ein ionischer Zwischenstopp, danach zur letzten Basis.',stops:['gallipoli','prosciutto','chianca'],choice:{main:'prosciutto',alt:'lapillo'},timeline:[['Start','Gallipoli verlassen'],['Unterwegs','Ein Strandstopp'],['Danach','Torre Chianca Ortszentrum']]},
+ {day:11,title:'Torre Chianca · nichts müssen',kind:'rest',summary:'Strand, Spaziergang, Lesen, Essen. Der Tag bleibt absichtlich frei.',stops:['chianca'],timeline:[['Ganzer Tag','Torre Chianca & Ruhe']]},
+ {day:12,title:'Wetterreserve',kind:'rest',summary:'Am Meer in Torre Chianca bleiben – oder optional Torre dell’Orso, wenn noch einmal eine starke Adriabucht gewünscht ist.',stops:['chianca'],choice:{main:'chianca',alt:'orso'},timeline:[['Start','Wetter prüfen'],['Tag','Torre Chianca ODER Torre dell’Orso']]},
+ {day:13,title:'Abreise',kind:'transfer',summary:'Ruhig abreisen. Kein zusätzlicher Ausflugsstopp.',stops:['chianca'],timeline:[['Start','Torre Chianca verlassen'],['Danach','Direkte Weiterreise']]}
+];
+
+let map = null;
+let routeLine = null;
+const markers = {};
+
+
+function photoUrl(s){return s.commonsFile?`https://commons.wikimedia.org/wiki/Special:Redirect/file/${encodeURIComponent(s.commonsFile)}`:null}
+async function fetchCommonsPhoto(s,img,credit){
+  if(!img) return;
+  if(s.commonsFile){
+    img.src=photoUrl(s);
+    if(credit){credit.href=`https://commons.wikimedia.org/wiki/File:${encodeURIComponent(s.commonsFile)}`;credit.textContent='Wikimedia Commons';}
+    return;
+  }
+  const query=s.photoQuery||s.name;
+  const url=`https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(query)}&gsrnamespace=6&gsrlimit=6&prop=imageinfo&iiprop=url|extmetadata&iiurlwidth=1400&format=json&origin=*`;
+  try{
+    const r=await fetch(url);
+    if(!r.ok) throw new Error('photo fetch failed');
+    const data=await r.json();
+    const pages=Object.values(data.query?.pages||{}).filter(p=>p.imageinfo?.[0]?.thumburl);
+    const page=pages[0];
+    if(!page) throw new Error('no image');
+    img.src=page.imageinfo[0].thumburl;
+    if(credit){credit.href=page.imageinfo[0].descriptionurl;credit.textContent='Wikimedia Commons';}
+  }catch(e){
+    img.alt='Foto online nicht geladen';
+    if(credit){credit.textContent='Fotos suchen';credit.href=`https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search=${encodeURIComponent(query)}`;}
+  }
+}
+function gmPlace(s){const q=s.mapsQuery||s.name+', Puglia, Italy';return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`}
+
+function switchView(name){
+  const target=document.getElementById('view-'+name);
+  if(!target) return;
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  target.classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.toggle('active',b.dataset.view===name));
+  if(name==='map' && map) setTimeout(()=>map.invalidateSize(),60);
+}
+
+function openSpot(id){
+  const s=byId[id]; if(!s) return;
+  closeSheet('daySheet');
+  const el=document.getElementById('spotDetail');
+  el.innerHTML=`<div class="detail-photo"><img id="detailImg" alt="${s.name}"><div class="photo-shade"></div><a id="detailCredit" class="photo-credit" target="_blank" rel="noopener">Fotoquelle</a></div><div class="detail-body"><div class="detail-title"><div><div class="eyebrow">${s.type}</div><h2>${s.name}</h2></div>${s.rank?`<div class="rank">RANG<b>#${s.rank}</b></div>`:''}</div><p>${s.blurb}</p><div class="info-grid"><div class="info"><label>Rolle</label><div>${s.role==='main'?'Hauptwahl':s.role==='alt'?'Alternative':s.role==='optional'?'Optional':'Basis'}</div></div><div class="info"><label>Ziel</label><div>${s.centerLabel||'Öffentlicher Spot'}</div></div></div><div class="october"><b>Nebensaison-Hinweis:</b> ${s.season}</div><div class="actions"><a class="action" href="${gmPlace(s)}" target="_blank" rel="noopener">In Maps öffnen</a><button class="action secondary" data-action="focus-map" data-id="${s.id}">Auf Karte zeigen</button></div></div>`;
+  fetchCommonsPhoto(s,document.getElementById('detailImg'),document.getElementById('detailCredit'));
+  document.getElementById('spotSheet').classList.add('open');
+}
+function focusMap(id){
+  document.getElementById('spotSheet').classList.remove('open');
+  switchView('map');
+  if(map && markers[id]){
+    setTimeout(()=>{map.setView([byId[id].lat,byId[id].lng],13);markers[id].openPopup();},100);
+  } else {
+    const target=document.querySelector(`[data-map-fallback-id="${id}"]`);
+    if(target) setTimeout(()=>target.scrollIntoView({behavior:'smooth',block:'center'}),100);
+  }
+}
+
+function dayRouteUrl(day,alt=false){
+  const ids=[...day.stops];
+  if(day.choice){
+    const chosen=alt?day.choice.alt:day.choice.main;
+    for(let i=0;i<ids.length;i++) if(ids[i]===day.choice.main) ids[i]=chosen;
+    if(!ids.includes(chosen)) ids.splice(1,0,chosen);
+  }
+  const ps=ids.map(id=>byId[id]).filter(Boolean);
+  if(ps.length<2) return ps[0]?gmPlace(ps[0]):'#';
+  const place=s=>(s.mapsQuery||s.name+', Puglia, Italy');
+  const origin=place(ps[0]), dest=place(ps[ps.length-1]);
+  const way=ps.slice(1,-1).map(place).join('|');
+  return `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(dest)}${way?`&waypoints=${encodeURIComponent(way)}`:''}`;
+}
+function openDay(i){
+  const d=days[i]; if(!d) return;
+  closeSheet('spotSheet');
+  const choice=d.choice?`<div class="choice"><strong>Genau ein Ziel auswählen</strong><p><b>${byId[d.choice.main].name}</b> ist die Hauptwahl. <b>${byId[d.choice.alt].name}</b> ersetzt sie je nach Wetter – nicht zusätzlich.</p><div class="choice-buttons"><button class="primary" data-action="open-spot" data-id="${d.choice.main}">A · ${byId[d.choice.main].name}</button><button class="alt" data-action="open-spot" data-id="${d.choice.alt}">B · ${byId[d.choice.alt].name}</button></div></div>`:'';
+  document.getElementById('dayDetail').innerHTML=`<div class="day-sheet-body"><div class="eyebrow">TAG ${d.day}</div><h2>${d.title}</h2><div class="summary">${d.summary}</div>${choice}<div class="timeline">${d.timeline.map(x=>`<div class="timeline-item"><div class="timeline-icon">•</div><div class="timeline-text"><b>${x[0]}</b><span>${x[1]}</span></div></div>`).join('')}</div><div class="actions" style="margin-top:18px">${d.stops.length>1?`<a class="action" href="${dayRouteUrl(d,false)}" target="_blank" rel="noopener">Route Hauptwahl</a>`:''}${d.choice?`<a class="action secondary" href="${dayRouteUrl(d,true)}" target="_blank" rel="noopener">Route Alternative</a>`:''}</div></div>`;
+  document.getElementById('daySheet').classList.add('open');
+}
+
+function renderDays(){
+  document.getElementById('dayList').innerHTML=days.map((d,i)=>{
+    const flag=d.kind==='transfer'?'Transfer':d.kind==='rest'?'Ruhetag':d.kind==='city'?'Stadt':'Küste';
+    return `<article class="day-card" role="button" tabindex="0" data-action="open-day" data-index="${i}"><div class="day-top"><div class="date-badge"><b>${d.day}</b><small>TAG</small></div><h3>${d.title}</h3><span style="font-size:18px;color:#a6abb4">→</span></div><p>${d.summary}</p><div class="day-flags"><span class="flag ${d.kind}">${flag}</span>${d.choice?'<span class="flag">1 Hauptstopp + 1 Alternative</span>':''}</div></article>`;
+  }).join('');
+}
+function renderStops(){
+  const q=document.getElementById('stopSearch').value.trim().toLowerCase();
+  const f=document.getElementById('stopFilter').value;
+  const list=spots.filter(s=>!q||s.name.toLowerCase().includes(q)||s.type.toLowerCase().includes(q))
+    .filter(s=>f==='all'||s.role===f);
+  document.getElementById('stopsGrid').innerHTML=list.map(s=>`<article class="stop-card" role="button" tabindex="0" data-action="open-spot" data-id="${s.id}"><div class="stop-img"><img data-photo="${s.id}" alt="${s.name}"><span class="stop-tag">${s.role==='main'?'HAUPTWAHL':s.role==='alt'?'ALTERNATIVE':s.role==='optional'?'OPTIONAL':'BASIS'}</span></div><div class="stop-body">${s.rank?`<span class="stop-rank">#${s.rank}</span>`:''}<h3>${s.name}</h3><p>${s.blurb}</p></div></article>`).join('');
+  document.querySelectorAll('[data-photo]').forEach(img=>{
+    const s=byId[img.dataset.photo];
+    fetchCommonsPhoto(s,img,null);
+  });
+}
+
+function renderMapFallback(){
+  const mapEl=document.getElementById('map');
+  mapEl.innerHTML=`<div class="map-fallback"><div class="map-fallback-inner"><div class="eyebrow">KARTE</div><h2>Salento Route</h2><p>Die interaktive Kartenbibliothek konnte nicht geladen werden. Navigation, Tagesplan und Stops funktionieren trotzdem vollständig.</p><div class="fallback-route">${['lecce','baia','otranto','badisco','pescoluse','gallipoli','suina','selvaggio','prosciutto','chianca'].map((id,i)=>{const s=byId[id];return `<button data-action="open-spot" data-id="${id}" data-map-fallback-id="${id}"><span>${i+1}</span>${s.name}</button>`}).join('')}</div></div></div>`;
+}
+function iconFor(role){
+  const cls=role==='main'?'main':role==='alt'||role==='optional'?'alt':'base';
+  return window.L.divIcon({className:'',html:`<div class="marker-pin ${cls}"><span></span></div>`,iconSize:[28,28],iconAnchor:[14,28]});
+}
+function initMap(){
+  if(!window.L){ renderMapFallback(); return; }
+  try{
+    map=window.L.map('map',{zoomControl:false,attributionControl:true}).setView([40.20,18.12],9);
+    window.L.control.zoom({position:'bottomright'}).addTo(map);
+    window.L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{maxZoom:19,attribution:'&copy; OpenStreetMap contributors &copy; CARTO'}).addTo(map);
+    spots.forEach(s=>{
+      const m=window.L.marker([s.lat,s.lng],{icon:iconFor(s.role)}).addTo(map);
+      m.bindPopup(`<div class="popup-title">${s.name}</div><div style="font-size:10px;color:#747985;margin-bottom:7px">${s.type}</div><button class="popup-link" data-action="open-spot" data-id="${s.id}">Details öffnen →</button>`);
+      markers[s.id]=m;
+    });
+    const mainRoute=['lecce','baia','otranto','badisco','otranto','pescoluse','gallipoli','suina','gallipoli','selvaggio','gallipoli','prosciutto','chianca'].map(id=>[byId[id].lat,byId[id].lng]);
+    routeLine=window.L.polyline(mainRoute,{color:'#19d7cf',weight:4,opacity:.72,dashArray:'8 8'}).addTo(map);
+    setTimeout(fitRoute,250);
+  }catch(e){
+    console.warn('Map initialization failed',e);
+    map=null; routeLine=null;
+    renderMapFallback();
+  }
+}
+function fitRoute(){
+  switchView('map');
+  if(map && routeLine) map.fitBounds(routeLine.getBounds(),{padding:[50,50]});
+}
+
+function closeSheet(id){const el=document.getElementById(id); if(el) el.classList.remove('open');}
+function handleAction(el){
+  const action=el.dataset.action;
+  if(action==='open-spot') openSpot(el.dataset.id);
+  if(action==='open-day') openDay(Number(el.dataset.index));
+  if(action==='focus-map') focusMap(el.dataset.id);
+}
+
+// Robust event delegation: no inline onclick handlers required.
+document.addEventListener('click',e=>{
+  const nav=e.target.closest('.nav-btn[data-view]');
+  if(nav){switchView(nav.dataset.view);return;}
+  const close=e.target.closest('[data-close]');
+  if(close){closeSheet(close.dataset.close);return;}
+  const action=e.target.closest('[data-action]');
+  if(action){handleAction(action);return;}
+  const fit=e.target.closest('#fitRoute');
+  if(fit){fitRoute();return;}
+  if(e.target.classList.contains('sheet')) e.target.classList.remove('open');
+});
+document.addEventListener('keydown',e=>{
+  if(e.key!=='Enter' && e.key!==' ') return;
+  const action=e.target.closest('[data-action]');
+  if(action){e.preventDefault();handleAction(action);}
+});
+
+document.getElementById('stopSearch').addEventListener('input',renderStops);
+document.getElementById('stopFilter').addEventListener('change',renderStops);
+
+function updateCountdown(){
+  const el=document.getElementById('countdown');
+  if(el) el.innerHTML='<b>4 Basen</b>ruhige Route';
+}
+
+// Core UI initializes first; the map is only progressive enhancement.
+renderDays();
+renderStops();
+updateCountdown();
+initMap();
+
+if('serviceWorker' in navigator && location.protocol.startsWith('http')){
+  window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+}
+</script>
+</body>
+</html>
